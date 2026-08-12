@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <meta name="theme-color" content="#D4AF37" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="সোনার দাম ক্যালকুলেটর" />
+    <meta name="description" content="বাংলাদেশের সোনার দাম গণনা করার সহজ অ্যাপ। ভরি, আনা, রতি ও পয়েন্টে ওজন ইনপুট দিয়ে মজুরি ও ভ্যাট সহ মোট মূল্য বের করুন।" />
+
+    <title>সোনার দাম ক্যালকুলেটর</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+
+    <!-- Google Font (Noto Sans Bengali) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="icon-192.png" />
+
+    <style>
+        * {
+            font-family: 'Noto Sans Bengali', 'Segoe UI', system-ui, sans-serif;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f8f6f0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        /* Custom gold gradient */
+        .bg-gold {
+            background: linear-gradient(135deg, #e8c84a 0%, #d4af37 40%, #b8952e 100%);
+        }
+        .bg-gold-light {
+            background: linear-gradient(135deg, #fdf6e3 0%, #f5edd6 100%);
+        }
+        .text-gold {
+            color: #b8952e;
+        }
+        .border-gold {
+            border-color: #d4af37;
+        }
+        .shadow-gold {
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+        }
+        .shadow-card {
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+        .shadow-card-hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        /* Input styling */
+        .input-gold {
+            @apply w-full px-4 py-3 text-lg rounded-xl border-2 border-gray-200 bg-white/90 focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all duration-200 outline-none;
+            font-size: 1.125rem;
+        }
+        .input-gold:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+        }
+        .input-gold-sm {
+            @apply w-full px-3 py-2.5 text-base rounded-lg border-2 border-gray-200 bg-white/90 focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all duration-200 outline-none;
+        }
+        .input-gold-sm:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+        }
+        .input-gold-sm::placeholder,
+        .input-gold::placeholder {
+            color: #bbb;
+            font-weight: 300;
+            font-size: 0.9em;
+        }
+        /* Toggle switch */
+        .toggle-wrapper {
+            display: flex;
+            background: #f0ede8;
+            border-radius: 999px;
+            padding: 4px;
+            position: relative;
+            width: 100%;
+            max-width: 280px;
+        }
+        .toggle-wrapper .toggle-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            z-index: 1;
+            color: #666;
+            user-select: none;
+        }
+        .toggle-wrapper .toggle-option.active {
+            background: #d4af37;
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(212, 175, 55, 0.35);
+        }
+        .toggle-wrapper .toggle-option:not(.active):hover {
+            color: #333;
+        }
+        /* Card */
+        .card {
+            @apply bg-white rounded-2xl shadow-card p-5 border border-white/50 transition-all duration-200;
+        }
+        .card:has(input:focus),
+        .card:has(select:focus) {
+            @apply shadow-card-hover border-gold/30;
+        }
+        /* Result highlight */
+        .result-grand-total {
+            background: linear-gradient(135deg, #d4af37 0%, #c5a032 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 24px rgba(212, 175, 55, 0.3);
+        }
+        .result-grand-total .amount {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        /* Weight input grid */
+        .weight-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .weight-grid .weight-item label {
+            @apply text-xs font-medium text-gray-500 block mb-1;
+            letter-spacing: 0.3px;
+        }
+        /* Responsive tweaks */
+        @media (min-width: 640px) {
+            .weight-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+            .card {
+                padding: 24px;
+            }
+        }
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0ede8;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 8px;
+        }
+        /* Number input arrows hidden */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* VAT badge */
+        .vat-badge {
+            background: #fef3d7;
+            color: #b8952e;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+        }
+        /* Install banner */
+        .install-banner {
+            background: #2d2a24;
+            color: #f5edd6;
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+        .install-banner.show {
+            display: flex;
+        }
+        .install-banner button {
+            background: #d4af37;
+            color: #1a1a1a;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .install-banner button:hover {
+            background: #e8c84a;
+        }
+        /* Animation */
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .fade-slide-up {
+            animation: fadeSlideUp 0.4s ease forwards;
+        }
+        /* Making charge input group */
+        .mc-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mc-input-group .mc-symbol {
+            @apply text-gray-500 font-medium text-lg;
+            min-width: 28px;
+        }
+        /* Loading shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, #f0ede8 25%, #e8e4dd 50%, #f0ede8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        /* Footer */
+        .footer-text {
+            font-size: 0.75rem;
+            color: #aaa;
+            text-align: center;
+            padding: 24px 16px 8px;
+            border-top: 1px solid #eee;
+            margin-top: 8px;
+        }
+        .footer-text a {
+            color: #b8952e;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== MAIN APP ===== -->
+    <div id="app" class="max-w-lg mx-auto px-4 py-5 pb-24">
+
+        <!-- Install Banner -->
+        <div id="installBanner" class="install-banner mb-4">
+            <span class="flex-1">📲 অ্যাপটি ইনস্টল করুন</span>
+            <button id="installBtn">ইনস্টল</button>
+        </div>
+
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold shadow-gold mb-3">
+                <span class="text-3xl">🏅</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 tracking-tight">সোনার দাম ক্যালকুলেটর</h1>
+            <p class="text-sm text-gray-500 mt-0.5">ভরি, আনা, রতি ও পয়েন্টে সহজ গণনা</p>
+        </header>
+
+        <!-- ===== CARD 1: Price per Vori ===== -->
+        <div class="card mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                🪙 ভরি প্রতি দাম (বাজারের দাম)
+            </label>
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold text-gold">৳</span>
+                <input type="number" id="pricePerVori" value="85000" step="100" min="0"
+                class="input-gold flex-1" placeholder="যেমন: ৮৫০০০" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5">বর্তমান বাজার দর অনুযায়ী পরিবর্তন করুন</p>
+        </div>
+
+        <!-- ===== CARD 2: Weight Input ===== -->
+        <div class="card mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">
+                ⚖️ সোনার ওজন
+            </label>
+            <div class="weight-grid">
+                <div class="weight-item">
+                    <label>ভরি</label>
+                    <input type="number" id="vori" value="1" step="0.01" min="0"
+                    class="input-gold-sm" placeholder="০" />
+                </div>
+                <div class="weight-item">
+                    <label>আনা</label>
+                    <input type="number" id="ana" value="0" step="0.1" min="0" max="15.9"
+                    class="input-gold-sm" placeholder="০" />
+                </div>
+                <div class="weight-item">
+                    <label>রতি</label>
+                    <input type="number" id="roti" value="0" step="0.1" min="0" max="5.9"
+                    class="input-gold-sm" placeholder="০" />
+                </div>
+                <div class="weight-item">
+                    <label>পয়েন্ট</label>
+                    <input type="number" id="point" value="0" step="0.1" min="0" max="9.9"
+                    class="input-gold-sm" placeholder="০" />
+                </div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-2.5 px-1">
+                <span>১ ভরি = ১৬ আনা</span>
+                <span>১ আনা = ৬ রতি</span>
+                <span>১ রতি = ১০ পয়েন্ট</span>
+            </div>
+        </div>
+
+        <!-- ===== CARD 3: Making Charge ===== -->
+        <div class="card mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <label class="text-sm font-semibold text-gray-700">🔧 মজুরি / তৈরি খরচ</label>
+                <span class="vat-badge">ঐচ্ছিক</span>
+            </div>
+
+            <!-- Toggle: Fixed / Percentage -->
+            <div class="toggle-wrapper mx-auto mb-4">
+                <span class="toggle-option active" data-mode="fixed" id="mcToggleFixed">নির্দিষ্ট</span>
+                <span class="toggle-option" data-mode="percentage" id="mcTogglePercent">শতকরা</span>
+            </div>
+
+            <!-- Input -->
+            <div class="mc-input-group">
+                <span class="mc-symbol" id="mcSymbol">৳</span>
+                <input type="number" id="makingCharge" value="1500" step="50" min="0"
+                class="input-gold-sm flex-1" placeholder="মজুরি দিন" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5" id="mcHint">নির্দিষ্ট টাকা অথবা শতকরা হার দিন</p>
+        </div>
+
+        <!-- ===== CARD 4: VAT ===== -->
+        <div class="card mb-4">
+            <div class="flex items-center justify-between mb-1.5">
+                <label class="text-sm font-semibold text-gray-700">🧾 ভ্যাট (VAT)</label>
+                <span class="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-600">সরকারি হার ৫%</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="number" id="vatPercent" value="5" step="0.1" min="0" max="100"
+                class="input-gold-sm flex-1" placeholder="৫" />
+                <span class="text-lg font-medium text-gray-600">%</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5">মজুরি সহ মোট মূল্যের উপর প্রযোজ্য</p>
+        </div>
+
+        <!-- ===== CALCULATE BUTTON ===== -->
+        <button id="calcBtn"
+        class="w-full bg-gold text-white font-bold text-xl py-4 rounded-2xl shadow-gold transition-all duration-200 hover:shadow-lg hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-2">
+        <span>📊</span> হিসাব করুন
+    </button>
+
+    <!-- ===== RESULTS ===== -->
+    <div id="results" class="mt-6 space-y-3 fade-slide-up" style="display:none;">
+
+        <!-- Grand Total -->
+        <div class="result-grand-total flex items-center justify-between">
+            <div>
+                <span class="text-sm font-medium opacity-90">মোট মূল্য</span>
+                <div class="amount" id="grandTotal">৳ ০</div>
+            </div>
+            <span class="text-4xl opacity-60">🏅</span>
+        </div>
+
+        <!-- Breakdown -->
+        <div class="card !p-4 space-y-2.5">
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">সোনার ভিত্তি দাম</span>
+                <span class="font-semibold text-gray-800" id="basePrice">৳ ০</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">মোট মজুরি</span>
+                <span class="font-semibold text-gray-800" id="totalMakingCharge">৳ ০</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">মোট ভ্যাট (<span id="vatPercentDisplay">৫</span>%)</span>
+                <span class="font-semibold text-gray-800" id="totalVat">৳ ০</span>
+            </div>
+            <hr class="border-gray-200 my-1" />
+            <div class="flex justify-between items-center text-base font-bold">
+                <span class="text-gray-700">সর্বমোট</span>
+                <span class="text-gold text-xl" id="grandTotalBreakdown">৳ ০</span>
+            </div>
+            <!-- Weight summary -->
+            <div class="text-xs text-gray-400 pt-1 border-t border-gray-100 mt-1 flex justify-between">
+                <span>মোট ওজন: <span id="totalWeightDisplay">০.০০০০</span> ভরি</span>
+                <span id="weightBreakdown" class="text-gray-400"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-text">
+        বাংলাদেশের সোনার বাজার অনুযায়ী তৈরি &bull;
+        <span id="currentDate"></span>
+    </div>
+
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    (function() {
+        'use strict';
+
+        // ---- DOM refs ----
+        const pricePerVori = document.getElementById('pricePerVori');
+        const voriInput = document.getElementById('vori');
+        const anaInput = document.getElementById('ana');
+        const rotiInput = document.getElementById('roti');
+        const pointInput = document.getElementById('point');
+        const makingCharge = document.getElementById('makingCharge');
+        const vatPercent = document.getElementById('vatPercent');
+        const calcBtn = document.getElementById('calcBtn');
+        const results = document.getElementById('results');
+
+        // Result elements
+        const basePriceEl = document.getElementById('basePrice');
+        const totalMakingChargeEl = document.getElementById('totalMakingCharge');
+        const totalVatEl = document.getElementById('totalVat');
+        const grandTotalEl = document.getElementById('grandTotal');
+        const grandTotalBreakdown = document.getElementById('grandTotalBreakdown');
+        const vatPercentDisplay = document.getElementById('vatPercentDisplay');
+        const totalWeightDisplay = document.getElementById('totalWeightDisplay');
+        const weightBreakdown = document.getElementById('weightBreakdown');
+
+        // Toggle
+        const mcToggleFixed = document.getElementById('mcToggleFixed');
+        const mcTogglePercent = document.getElementById('mcTogglePercent');
+        const mcSymbol = document.getElementById('mcSymbol');
+        const mcHint = document.getElementById('mcHint');
+
+        // Install banner
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+
+        // ---- State ----
+        let makingChargeMode = 'fixed'; // 'fixed' | 'percentage'
+        let deferredPrompt = null;
+
+        // ---- Helpers ----
+        function formatCurrency(amount) {
+            return '৳ ' + Number(amount).toLocaleString('bn-BD', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function formatCurrencyDecimal(amount) {
+            return '৳ ' + Number(amount).toLocaleString('bn-BD', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function parseNum(val) {
+            const v = parseFloat(val);
+            return isNaN(v) ? 0 : v;
+        }
+
+        // ---- Conversion: weight to Vori ----
+        function weightToVori(v, a, r, p) {
+            // 1 Vori = 16 Ana, 1 Ana = 6 Roti, 1 Roti = 10 Point
+            return v + (a / 16) + (r / (16 * 6)) + (p / (16 * 6 * 10));
+        }
+
+        // ---- Calculate ----
+        function calculate() {
+            const price = parseNum(pricePerVori.value);
+            const v = parseNum(voriInput.value);
+            const a = parseNum(anaInput.value);
+            const r = parseNum(rotiInput.value);
+            const p = parseNum(pointInput.value);
+            const mc = parseNum(makingCharge.value);
+            const vat = parseNum(vatPercent.value) / 100;
+
+            const totalVori = weightToVori(v, a, r, p);
+
+            // Base gold price
+            const basePrice = totalVori * price;
+
+            // Making charge
+            let makingChargeAmount = 0;
+            if (makingChargeMode === 'fixed') {
+                makingChargeAmount = mc;
+            } else {
+                makingChargeAmount = (mc / 100) * basePrice;
+            }
+
+            // Subtotal before VAT
+            const subtotal = basePrice + makingChargeAmount;
+
+            // VAT
+            const vatAmount = subtotal * vat;
+
+            // Grand total
+            const grandTotal = subtotal + vatAmount;
+
+            // ---- Update UI ----
+            basePriceEl.textContent = formatCurrencyDecimal(basePrice);
+            totalMakingChargeEl.textContent = formatCurrencyDecimal(makingChargeAmount);
+            totalVatEl.textContent = formatCurrencyDecimal(vatAmount);
+            const grandFormatted = formatCurrencyDecimal(grandTotal);
+            grandTotalEl.textContent = grandFormatted;
+            grandTotalBreakdown.textConten
