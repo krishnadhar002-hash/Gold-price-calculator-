@@ -37,7 +37,6 @@
             min-height: 100dvh;
             padding-bottom: env(safe-area-inset-bottom);
         }
-        /* Custom gold gradient */
         .bg-gold {
             background: linear-gradient(135deg, #e8c84a 0%, #d4af37 40%, #b8952e 100%);
         }
@@ -59,7 +58,6 @@
         .shadow-card-hover {
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
         }
-        /* Input styling */
         .input-gold {
             @apply w-full px-4 py-3 text-lg rounded-xl border-2 border-gray-200 bg-white/90 focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all duration-200 outline-none;
             font-size: 1.125rem;
@@ -81,7 +79,6 @@
             font-weight: 300;
             font-size: 0.9em;
         }
-        /* Toggle switch */
         .toggle-wrapper {
             display: flex;
             background: #f0ede8;
@@ -112,7 +109,6 @@
         .toggle-wrapper .toggle-option:not(.active):hover {
             color: #333;
         }
-        /* Card */
         .card {
             @apply bg-white rounded-2xl shadow-card p-5 border border-white/50 transition-all duration-200;
         }
@@ -120,7 +116,6 @@
         .card:has(select:focus) {
             @apply shadow-card-hover border-gold/30;
         }
-        /* Result highlight */
         .result-grand-total {
             background: linear-gradient(135deg, #d4af37 0%, #c5a032 100%);
             color: #fff;
@@ -133,7 +128,6 @@
             font-weight: 700;
             letter-spacing: 0.5px;
         }
-        /* Weight input grid */
         .weight-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -143,7 +137,6 @@
             @apply text-xs font-medium text-gray-500 block mb-1;
             letter-spacing: 0.3px;
         }
-        /* Responsive tweaks */
         @media (min-width: 640px) {
             .weight-grid {
                 grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -152,7 +145,6 @@
                 padding: 24px;
             }
         }
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -164,7 +156,6 @@
             background: #d4af37;
             border-radius: 8px;
         }
-        /* Number input arrows hidden */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
             -webkit-appearance: none;
@@ -173,7 +164,6 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
-        /* VAT badge */
         .vat-badge {
             background: #fef3d7;
             color: #b8952e;
@@ -182,7 +172,6 @@
             border-radius: 999px;
             font-size: 0.8rem;
         }
-        /* Install banner */
         .install-banner {
             background: #2d2a24;
             color: #f5edd6;
@@ -212,7 +201,6 @@
         .install-banner button:hover {
             background: #e8c84a;
         }
-        /* Animation */
         @keyframes fadeSlideUp {
             from {
                 opacity: 0;
@@ -226,7 +214,6 @@
         .fade-slide-up {
             animation: fadeSlideUp 0.4s ease forwards;
         }
-        /* Making charge input group */
         .mc-input-group {
             display: flex;
             align-items: center;
@@ -236,21 +223,6 @@
             @apply text-gray-500 font-medium text-lg;
             min-width: 28px;
         }
-        /* Loading shimmer */
-        .shimmer {
-            background: linear-gradient(90deg, #f0ede8 25%, #e8e4dd 50%, #f0ede8 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-            100% {
-                background-position: -200% 0;
-            }
-        }
-        /* Footer */
         .footer-text {
             font-size: 0.75rem;
             color: #aaa;
@@ -262,6 +234,15 @@
         .footer-text a {
             color: #b8952e;
             text-decoration: none;
+        }
+        /* error state */
+        .input-error {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+        .input-error:focus {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
         }
     </style>
 </head>
@@ -340,7 +321,7 @@
             </div>
 
             <!-- Toggle: Fixed / Percentage -->
-            <div class="toggle-wrapper mx-auto mb-4">
+            <div class="toggle-wrapper mx-auto mb-4" id="mcToggleWrapper">
                 <span class="toggle-option active" data-mode="fixed" id="mcToggleFixed">নির্দিষ্ট</span>
                 <span class="toggle-option" data-mode="percentage" id="mcTogglePercent">শতকরা</span>
             </div>
@@ -458,11 +439,12 @@
         const installBtn = document.getElementById('installBtn');
 
         // ---- State ----
-        let makingChargeMode = 'fixed'; // 'fixed' | 'percentage'
+        let makingChargeMode = 'fixed';
         let deferredPrompt = null;
 
         // ---- Helpers ----
         function formatCurrency(amount) {
+            if (!isFinite(amount)) return '৳ ০';
             return '৳ ' + Number(amount).toLocaleString('bn-BD', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
@@ -470,6 +452,7 @@
         }
 
         function formatCurrencyDecimal(amount) {
+            if (!isFinite(amount)) return '৳ ০.০০';
             return '৳ ' + Number(amount).toLocaleString('bn-BD', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
@@ -477,6 +460,7 @@
         }
 
         function parseNum(val) {
+            if (val === null || val === undefined || val === '') return 0;
             const v = parseFloat(val);
             return isNaN(v) ? 0 : v;
         }
@@ -487,42 +471,50 @@
             return v + (a / 16) + (r / (16 * 6)) + (p / (16 * 6 * 10));
         }
 
-        // ---- Calculate ----
+        // ---- Core Calculation ----
         function calculate() {
-            const price = parseNum(pricePerVori.value);
-            const v = parseNum(voriInput.value);
-            const a = parseNum(anaInput.value);
-            const r = parseNum(rotiInput.value);
-            const p = parseNum(pointInput.value);
-            const mc = parseNum(makingCharge.value);
-            const vat = parseNum(vatPercent.value) / 100;
+            try {
+                // Read all inputs
+                const price = parseNum(pricePerVori.value);
+                const v = parseNum(voriInput.value);
+                const a = parseNum(anaInput.value);
+                const r = parseNum(rotiInput.value);
+                const p = parseNum(pointInput.value);
+                const mc = parseNum(makingCharge.value);
+                const vat = parseNum(vatPercent.value) / 100;
 
-            const totalVori = weightToVori(v, a, r, p);
+                // Total Vori
+                const totalVori = weightToVori(v, a, r, p);
 
-            // Base gold price
-            const basePrice = totalVori * price;
+                // Base gold price
+                const basePrice = totalVori * price;
 
-            // Making charge
-            let makingChargeAmount = 0;
-            if (makingChargeMode === 'fixed') {
-                makingChargeAmount = mc;
-            } else {
-                makingChargeAmount = (mc / 100) * basePrice;
-            }
+                // Making charge
+                let makingChargeAmount = 0;
+                if (makingChargeMode === 'fixed') {
+                    makingChargeAmount = mc;
+                } else {
+                    makingChargeAmount = (mc / 100) * basePrice;
+                }
 
-            // Subtotal before VAT
-            const subtotal = basePrice + makingChargeAmount;
+                // Subtotal before VAT
+                const subtotal = basePrice + makingChargeAmount;
 
-            // VAT
-            const vatAmount = subtotal * vat;
+                // VAT
+                const vatAmount = subtotal * vat;
 
-            // Grand total
-            const grandTotal = subtotal + vatAmount;
+                // Grand total
+                const grandTotal = subtotal + vatAmount;
 
-            // ---- Update UI ----
-            basePriceEl.textContent = formatCurrencyDecimal(basePrice);
-            totalMakingChargeEl.textContent = formatCurrencyDecimal(makingChargeAmount);
-            totalVatEl.textContent = formatCurrencyDecimal(vatAmount);
-            const grandFormatted = formatCurrencyDecimal(grandTotal);
-            grandTotalEl.textContent = grandFormatted;
-            grandTotalBreakdown.textConten
+                // ---- Update UI ----
+                basePriceEl.textContent = formatCurrencyDecimal(basePrice);
+                totalMakingChargeEl.textContent = formatCurrencyDecimal(makingChargeAmount);
+                totalVatEl.textContent = formatCurrencyDecimal(vatAmount);
+                const grandFormatted = formatCurrencyDecimal(grandTotal);
+                grandTotalEl.textContent = grandFormatted;
+                grandTotalBreakdown.textContent = grandFormatted;
+
+                vatPercentDisplay.textContent = (vat * 100).toFixed(1);
+
+                // Weight display
+               
